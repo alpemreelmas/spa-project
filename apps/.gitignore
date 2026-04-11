@@ -1,0 +1,5 @@
+apps/backend/bin/
+apps/backend/tmp/
+apps/backend/contact.db
+apps/backend/config.yaml
+main

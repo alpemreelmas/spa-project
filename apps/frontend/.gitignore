@@ -11,3 +11,8 @@ dist-ssr
 .vinxi
 __unconfig*
 todos.json
+.tanstack
+.vscode
+.idea
+*.log
+*.tsbuildinfo
