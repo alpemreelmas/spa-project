@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 )
 
 type AppConfig struct {
-	Port string `mapstructure:"port" yaml:"port"`
+	Port   string `mapstructure:"port" yaml:"port"`
 	DsnUri string `mapstructure:"dsnUri" yaml:"dsnUri"`
 }
 

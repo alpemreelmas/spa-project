@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/signal"
@@ -9,10 +10,9 @@ import (
 	"syscall"
 	"time"
 
-	"database/sql"
-
 	"github.com/alpemreelmas/spa-contact/app/healthcheck"
 	"github.com/alpemreelmas/spa-contact/db"
+	"github.com/alpemreelmas/spa-contact/pkg/config"
 	"github.com/go-playground/validator"
 	"github.com/gofiber/fiber/v3"
 	"go.uber.org/zap"
@@ -59,17 +59,26 @@ func handle[R Request, Res Response](handler HandlerInterface[R, Res]) fiber.Han
 	return func(c fiber.Ctx) error {
 		var req R
 
-		if err := c.Bind().Body(&req); err != nil {
-			// Handle validation errors
-			if validationErrors, ok := err.(validator.ValidationErrors); ok {
-				for _, e := range validationErrors {
-					return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-						"field": e.Field(),
-						"error": fmt.Sprintf("validation failed on '%s'", e.Tag()),
-					})
+		if c.Method() == fiber.MethodPost || c.Method() == fiber.MethodPut || c.Method() == fiber.MethodPatch {
+			if err := c.Bind().Body(&req); err != nil && !errors.Is(err, fiber.ErrUnprocessableEntity) {
+				if validationErrors, ok := err.(validator.ValidationErrors); ok {
+					for _, e := range validationErrors {
+						return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+							"field": e.Field(),
+							"error": fmt.Sprintf("validation failed on '%s'", e.Tag()),
+						})
+					}
 				}
+				return err
 			}
-			return err
+		}
+
+		if err := c.Bind().Query(&req); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+		}
+
+		if err := c.Bind().Header(&req); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 		}
 
 		/* ctx, cancel := context.WithTimeout(c.UserContext(), 3*time.Second)
@@ -84,12 +93,15 @@ func handle[R Request, Res Response](handler HandlerInterface[R, Res]) fiber.Han
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 		}
 
-		return c.JSON(res)
+		return c.JSON(fiber.Map{
+			"success": true,
+			"data":    res,
+		})
 	}
 }
 
 func main() {
-	appConfig := Read()
+	appConfig := config.Read()
 	defer zap.L().Sync()
 	zap.L().Info("app starting...")
 	zap.L().Info("app config", zap.Any("appConfig", appConfig))
@@ -106,8 +118,8 @@ func main() {
 	})
 
 	app.Use(RequestDurationMiddleware())
-
-	app.Get("/healthcheck", handle[healthcheck.HealthCheckRequest, healthcheck.HealthCheckResponse](healthcheckHandler))
+	api := app.Group("/api/v1")
+	api.Get("/healthcheck", handle[healthcheck.HealthCheckRequest, healthcheck.HealthCheckResponse](healthcheckHandler))
 
 	// Start server in a goroutine
 	go func() {

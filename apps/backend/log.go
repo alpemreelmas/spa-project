@@ -23,7 +23,7 @@ func init() {
 		Encoding:          "json",
 		EncoderConfig:     encoderCfg,
 		OutputPaths: []string{
-			"stderr",
+			"stdout",
 		},
 		ErrorOutputPaths: []string{
 			"stderr",

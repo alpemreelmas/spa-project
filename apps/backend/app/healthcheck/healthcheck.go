@@ -1,6 +1,8 @@
 package healthcheck
 
-import "context"
+import (
+	"context"
+)
 
 type HealthCheckRequest struct {
 }
