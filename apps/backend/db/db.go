@@ -7,10 +7,9 @@ import (
 	"go.uber.org/zap"
 )
 
-var DB *sqlx.DB
-
-func Init(dsnUri string) {
+func Init(dsnUri string) *sqlx.DB {
 	var err error
+	var DB *sqlx.DB
 	DB, err = sqlx.Connect("sqlite", dsnUri)
 	if err != nil {
 		zap.L().Error("Failed to connect to database", zap.Error(err))
@@ -24,31 +23,29 @@ func Init(dsnUri string) {
 		panic(fmt.Errorf("fatal error unmarshalling config: %w", err))
 	}
 
-	setupSchemas()
+	setupSchemas(DB)
 
 	zap.L().Info("SQLite connected successfully")
-
+	return DB
 }
 
-func setupSchemas() {
+func setupSchemas(database *sqlx.DB) {
 	schema := `CREATE TABLE IF NOT EXISTS contacts (
-    id TEXT PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     email TEXT NOT NULL,
     phone INTEGER,
     note TEXT,
-    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-
-
 CREATE UNIQUE INDEX IF NOT EXISTS idx_contacts_email ON contacts(email);
-CREATE UNIQUE INDEX IF NOT EXISTS idx_contacts_name ON contacts(name);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_contacts_phone ON contacts(phone);
 
 `
 
-	_, err := DB.Exec(schema)
+	_, err := database.Exec(schema)
 	if err != nil {
 		zap.L().Error("Failed to create table", zap.Error(err))
 		panic(fmt.Errorf("fatal error creating table: %w", err))

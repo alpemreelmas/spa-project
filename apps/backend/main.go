@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/alpemreelmas/spa-contact/app/contact"
 	"github.com/alpemreelmas/spa-contact/app/healthcheck"
 	"github.com/alpemreelmas/spa-contact/db"
 	"github.com/alpemreelmas/spa-contact/pkg/config"
@@ -106,9 +107,11 @@ func main() {
 	zap.L().Info("app starting...")
 	zap.L().Info("app config", zap.Any("appConfig", appConfig))
 
-	db.Init(appConfig.DsnUri)
+	database := db.Init(appConfig.DsnUri)
 
 	healthcheckHandler := healthcheck.NewHealthCheckHandler()
+	contactListHandler := contact.NewListContactHandler(database)
+	contactHandler := contact.NewCreateContactHandler(database)
 
 	app := fiber.New(fiber.Config{
 		IdleTimeout:  5 * time.Second,
@@ -120,6 +123,8 @@ func main() {
 	app.Use(RequestDurationMiddleware())
 	api := app.Group("/api/v1")
 	api.Get("/healthcheck", handle[healthcheck.HealthCheckRequest, healthcheck.HealthCheckResponse](healthcheckHandler))
+	api.Get("/contacts", handle[contact.ListContactRequest, contact.ListContactResponse](contactListHandler))
+	api.Post("/contacts", handle[contact.CreateContactRequest, contact.CreateContactResponse](contactHandler))
 
 	// Start server in a goroutine
 	go func() {

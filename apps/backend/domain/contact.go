@@ -1,9 +1,11 @@
 package domain
 
 type Contact struct {
-	ID    string `json:"id"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
-	Phone int32  `json:"phone"`
-	Note  string `json:"note"`
+	ID        int `json:"id"`
+	Name      string `json:"name"`
+	Email     string `json:"email"`
+	Phone     int32  `json:"phone"`
+	Note      string `json:"note"`
+	CreatedAt string `json:"created_at" db:"created_at"`
+	UpdatedAt string `json:"updated_at" db:"updated_at"`
 }
