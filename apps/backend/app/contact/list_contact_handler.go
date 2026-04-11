@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/alpemreelmas/spa-contact/domain"
+	"github.com/jmoiron/sqlx"
 )
 
 type ListContactRequest struct {
@@ -14,12 +15,18 @@ type ListContactResponse struct {
 }
 
 type ListContactHandler struct {
+	db *sqlx.DB
 }
 
-func NewListContactHandler() *ListContactHandler {
-	return &ListContactHandler{}
+func NewListContactHandler(db *sqlx.DB) *ListContactHandler {
+	return &ListContactHandler{db: db}
 }
 
 func (h *ListContactHandler) Handle(ctx context.Context, req *ListContactRequest) (*ListContactResponse, error) {
-	return &ListContactResponse{Contacts: []domain.Contact{}}, nil
+	var c []domain.Contact;
+	err := h.db.QueryRowx("SELECT city, telcode FROM place LIMIT 1").StructScan(&c)
+	if err != nil {
+		return nil, err
+	}
+	return &ListContactResponse{Contacts: c}, nil
 }

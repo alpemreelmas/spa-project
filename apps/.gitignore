@@ -1,5 +1,6 @@
-apps/backend/bin/
-apps/backend/tmp/
-apps/backend/contact.db
-apps/backend/config.yaml
-main
+backend/bin/
+backend/tmp/
+backend/contacts.db
+backend/config.yaml
+backend/.air.toml
+backend/main
