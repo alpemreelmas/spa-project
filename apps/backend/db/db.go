@@ -23,13 +23,13 @@ func Init(dsnUri string) *sqlx.DB {
 		panic(fmt.Errorf("fatal error unmarshalling config: %w", err))
 	}
 
-	setupSchemas(DB)
+	SetupSchemas(DB)
 
 	zap.L().Info("SQLite connected successfully")
 	return DB
 }
 
-func setupSchemas(database *sqlx.DB) {
+func SetupSchemas(database *sqlx.DB) {
 	schema := `CREATE TABLE IF NOT EXISTS contacts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
