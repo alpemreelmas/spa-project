@@ -74,6 +74,10 @@ func handle[R Request, Res Response](handler HandlerInterface[R, Res]) fiber.Han
 			}
 		}
 
+		if err := c.Bind().URI(&req); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+		}
+
 		if err := c.Bind().Query(&req); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 		}
@@ -112,6 +116,8 @@ func main() {
 	healthcheckHandler := healthcheck.NewHealthCheckHandler()
 	contactListHandler := contact.NewListContactHandler(database)
 	contactHandler := contact.NewCreateContactHandler(database)
+	contactUpdateHandler := contact.NewUpdateContactHandler(database)
+	contactDeleteHandler := contact.NewDeleteContactHandler(database)
 
 	app := fiber.New(fiber.Config{
 		IdleTimeout:  5 * time.Second,
@@ -125,6 +131,8 @@ func main() {
 	api.Get("/healthcheck", handle[healthcheck.HealthCheckRequest, healthcheck.HealthCheckResponse](healthcheckHandler))
 	api.Get("/contacts", handle[contact.ListContactRequest, contact.ListContactResponse](contactListHandler))
 	api.Post("/contacts", handle[contact.CreateContactRequest, contact.CreateContactResponse](contactHandler))
+	api.Put("/contacts/:id", handle[contact.UpdateContactRequest, contact.UpdateContactResponse](contactUpdateHandler))
+	api.Delete("/contacts/:id", handle[contact.DeleteContactRequest, contact.DeleteContactResponse](contactDeleteHandler))
 
 	// Start server in a goroutine
 	go func() {
