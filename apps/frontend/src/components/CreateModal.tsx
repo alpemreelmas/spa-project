@@ -3,26 +3,20 @@
 import type { Contact } from "#/integrations/table/contact";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CreateFormSchema } from "#/schemas/createFormData";
+import { CreateFormSchema, type CreateFormData } from "#/schemas/createFormData";
 import FormErrorBox from "./ui/FormErrorBox";
 
-type CreateModalProps = {
+type CreateModalProps = React.HTMLAttributes<HTMLDivElement> & {
   type: "create" | "edit";
   onSubmit: (data: CreateFormData) => void;
   person?: Contact;
-};
-
-type CreateFormData = {
-  name: string;
-  email: string;
-  phone: number;
-  notes?: string;
 };
 
 export default function CreateModal({
   type,
   onSubmit,
   person,
+  ...props
 }: CreateModalProps) {
   const {
     register,
@@ -33,13 +27,13 @@ export default function CreateModal({
     defaultValues: {
       name: person?.name ?? "",
       email: person?.email ?? "",
-      phone: person?.phone ?? 0,
+      phone: person?.phone ?? "",
       notes: person?.note ?? "",
     },
   });
 
   return (
-    <section className="feature-card border border-[var(--line)] p-4 sm:p-5">
+    <section className="feature-card border border-[var(--line)] p-4 sm:p-5" {...props}>
       <p className="island-kicker mb-2">Form Panel</p>
       <h2 className="m-0 text-xl font-bold text-[var(--sea-ink)]">
         {type === "create" ? "Add New Person" : "Edit Person"}
@@ -50,31 +44,46 @@ export default function CreateModal({
           type="text"
           placeholder="Name Surname"
           {...register("name")}
-          className="h-11 rounded-xl border border-[var(--line)] bg-[var(--surface-strong)] px-3 text-sm text-[var(--sea-ink)] outline-none placeholder:text-[var(--sea-ink-soft)] focus:border-[var(--lagoon)]"
-        />
+          className={`h-11 rounded-xl border px-3 text-sm outline-none
+            ${formErrors.name ? "border-red-500" : "border-[var(--line)]"}
+            bg-[var(--surface-strong)] text-[var(--sea-ink)]
+            placeholder:text-[var(--sea-ink-soft)]
+            focus:border-[var(--lagoon)]`}   
+          />
         <FormErrorBox error={formErrors.name} />
 
         <input
           type="email"
           placeholder="Email"
           {...register("email")}
-          className="h-11 rounded-xl border border-[var(--line)] bg-[var(--surface-strong)] px-3 text-sm text-[var(--sea-ink)] outline-none placeholder:text-[var(--sea-ink-soft)] focus:border-[var(--lagoon)]"
+          className={`h-11 rounded-xl border px-3 text-sm outline-none
+          ${formErrors.email ? "border-red-500" : "border-[var(--line)]"}
+          bg-[var(--surface-strong)] text-[var(--sea-ink)]
+          placeholder:text-[var(--sea-ink-soft)]
+          focus:border-[var(--lagoon)]`}
         />
         <FormErrorBox error={formErrors.email} />
 
         <input
-          type="number"
+          type="string"
           placeholder="Phone"
-          defaultValue={person?.phone}
           {...register("phone")}
-          className="h-11 rounded-xl border border-[var(--line)] bg-[var(--surface-strong)] px-3 text-sm text-[var(--sea-ink)] outline-none placeholder:text-[var(--sea-ink-soft)] focus:border-[var(--lagoon)]"
-        />
+          className={`h-11 rounded-xl border px-3 text-sm outline-none
+            ${formErrors.phone ? "border-red-500" : "border-[var(--line)]"}
+            bg-[var(--surface-strong)] text-[var(--sea-ink)]
+            placeholder:text-[var(--sea-ink-soft)]
+            focus:border-[var(--lagoon)]`}
+          />
         <FormErrorBox error={formErrors.phone} />
         <textarea
           rows={4}
           placeholder="Notes"
           {...register("notes")}
-          className="rounded-xl border border-[var(--line)] bg-[var(--surface-strong)] px-3 py-2 text-sm text-[var(--sea-ink)] outline-none placeholder:text-[var(--sea-ink-soft)] focus:border-[var(--lagoon)]"
+          className={`rounded-xl border px-3 py-2 text-sm outline-none
+            ${formErrors.notes ? "border-red-500" : "border-[var(--line)]"}
+            bg-[var(--surface-strong)] text-[var(--sea-ink)]
+            placeholder:text-[var(--sea-ink-soft)]
+            focus:border-[var(--lagoon)]`}
         />
         <FormErrorBox error={formErrors.notes} />
 

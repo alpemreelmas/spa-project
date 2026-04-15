@@ -6,7 +6,7 @@ type FormErrorBox = {
 
 export default function FormErrorBox({ error }: FormErrorBox) {
   if (error) {
-    return <div className="text-red-500 mb-1 text-sm ">{error.message}</div>;
+    return <div className="text-red-500 mb-1 text-xs ">{error.message}</div>;
   }
 
   return null;

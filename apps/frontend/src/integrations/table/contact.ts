@@ -2,7 +2,7 @@ export type Contact = {
     id: string;
     name: string;
     email: string;
-    phone: number;
+    phone: string;
     note: string;
     created_at: string;
     updated_at: string;
