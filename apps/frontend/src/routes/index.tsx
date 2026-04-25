@@ -1,7 +1,7 @@
 import { contactsQuery, deleteContactMutation } from "#/integrations/query";
 import { getColumns, type Contact } from "#/integrations/table/contact";
 import { getLastWeekStats } from "#/lib/utils/stats";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 import {
 	flexRender,
 	getCoreRowModel,
@@ -15,7 +15,10 @@ export const Route = createFileRoute("/")({ component: App });
 function App() {
 	const [search, setSearch] = useState("");
 	const deferredSearch = useDeferredValue(search);
-	const { isPending, data, isError } = useQuery(contactsQuery(deferredSearch));
+	const { isPending, isFetching, data, isError } = useQuery({
+		...contactsQuery(deferredSearch),
+		placeholderData: keepPreviousData,
+	});
 	const contacts = data?.data?.contacts ?? [];
 
 	const deleteMutation = useMutation({
@@ -104,6 +107,11 @@ function App() {
 						>
 							+ Yeni Kişi
 						</Link>
+						{isFetching ? (
+							<span className="text-xs font-semibold text-[var(--sea-ink-soft)]">
+								Araniyor...
+							</span>
+						) : null}
 					</div>
 
 					<div className="mb-4 flex flex-wrap gap-2">
