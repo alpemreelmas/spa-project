@@ -5,17 +5,17 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import {
 	flexRender,
 	getCoreRowModel,
-	getFilteredRowModel,
 	useReactTable,
 } from "@tanstack/react-table";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useDeferredValue, useState } from "react";
 
 export const Route = createFileRoute("/")({ component: App });
 
 function App() {
-	const { isPending, data, isError } = useQuery(contactsQuery);
-	const [globalFilter, setGlobalFilter] = useState("");
+	const [search, setSearch] = useState("");
+	const deferredSearch = useDeferredValue(search);
+	const { isPending, data, isError } = useQuery(contactsQuery(deferredSearch));
 	const contacts = data?.data?.contacts ?? [];
 
 	const deleteMutation = useMutation({
@@ -33,13 +33,7 @@ function App() {
 	const table = useReactTable({
 		data: contacts,
 		columns,
-		state: {
-			globalFilter,
-		},
-		onGlobalFilterChange: setGlobalFilter,
 		getCoreRowModel: getCoreRowModel(),
-		getFilteredRowModel: getFilteredRowModel(),
-		globalFilterFn: "includesString",
 	});
 
 	if (isError) {
@@ -99,9 +93,9 @@ function App() {
 					<div className="mb-4 flex flex-wrap items-center gap-2">
 						<input
 							type="search"
-							value={globalFilter}
-							onChange={(event) => setGlobalFilter(event.target.value)}
-							placeholder="İsim, e-posta, telefon veya not ara..."
+							value={search}
+							onChange={(event) => setSearch(event.target.value)}
+							placeholder="İsim, e-posta veya not ara..."
 							className="h-11 min-w-[220px] flex-1 rounded-xl border border-[var(--line)] bg-[var(--surface-strong)] px-4 text-sm text-[var(--sea-ink)] outline-none ring-0 placeholder:text-[var(--sea-ink-soft)] focus:border-[var(--lagoon)]"
 						/>
 						<Link

@@ -11,7 +11,7 @@ export const Route = createFileRoute("/edit/$id")({
 
 function RouteComponent() {
 	const { id } = useParams({ from: "/edit/$id" });
-	console.log("ID from params:", id);
+	
 	const mutation = useMutation({
 		mutationFn: updateContactMutation.mutationFn,
 		onSuccess: updateContactMutation.mutationSuccess,

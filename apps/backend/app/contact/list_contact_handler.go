@@ -2,12 +2,14 @@ package contact
 
 import (
 	"context"
+	"strings"
 
 	"github.com/alpemreelmas/spa-contact/domain"
 	"github.com/jmoiron/sqlx"
 )
 
 type ListContactRequest struct {
+	Search string `query:"search"`
 }
 
 type ListContactResponse struct {
@@ -24,7 +26,20 @@ func NewListContactHandler(db *sqlx.DB) *ListContactHandler {
 
 func (h *ListContactHandler) Handle(ctx context.Context, req *ListContactRequest) (*ListContactResponse, error) {
 	var c []domain.Contact
-	err := h.db.Select(&c, "SELECT * FROM contacts")
+	search := strings.TrimSpace(req.Search)
+
+	query := "SELECT * FROM contacts"
+	args := []any{}
+
+	if search != "" {
+		query += " WHERE LOWER(name) LIKE LOWER(?) OR LOWER(email) LIKE LOWER(?) OR LOWER(note) LIKE LOWER(?)"
+		pattern := "%" + search + "%"
+		args = append(args, pattern, pattern, pattern)
+	}
+
+	query += " ORDER BY id DESC"
+
+	err := h.db.SelectContext(ctx, &c, query, args...)
 	if err != nil {
 		return nil, err
 	}

@@ -9,8 +9,11 @@ import (
 
 func TestListContactHandler_Handle(t *testing.T) {
 	testCases := []struct {
-		name string
-		seed []CreateContactRequest
+		name          string
+		seed          []CreateContactRequest
+		request       ListContactRequest
+		expectedCount int
+		expectedEmail []string
 	}{
 		{
 			name: "returns one contact",
@@ -20,6 +23,8 @@ func TestListContactHandler_Handle(t *testing.T) {
 				Phone: 123,
 				Note:  "hello note",
 			}},
+			expectedCount: 1,
+			expectedEmail: []string{"alp@test.com"},
 		},
 		{
 			name: "returns multiple contacts",
@@ -37,6 +42,54 @@ func TestListContactHandler_Handle(t *testing.T) {
 					Note:  "",
 				},
 			},
+			expectedCount: 2,
+			expectedEmail: []string{"alp@test.com", "no@note.com"},
+		},
+		{
+			name: "filters contacts by name email and note",
+			seed: []CreateContactRequest{
+				{
+					Name:  "Alp",
+					Email: "alp@test.com",
+					Phone: 123,
+					Note:  "hello note",
+				},
+				{
+					Name:  "Zeynep",
+					Email: "zeda@test.com",
+					Phone: 456,
+					Note:  "finance owner",
+				},
+				{
+					Name:  "Mert",
+					Email: "mert@test.com",
+					Phone: 789,
+					Note:  "design team",
+				},
+			},
+			request:       ListContactRequest{Search: "fin"},
+			expectedCount: 1,
+			expectedEmail: []string{"zeda@test.com"},
+		},
+		{
+			name: "filters contacts case-insensitively",
+			seed: []CreateContactRequest{
+				{
+					Name:  "Alp",
+					Email: "alp@test.com",
+					Phone: 123,
+					Note:  "hello note",
+				},
+				{
+					Name:  "Mert",
+					Email: "mert@test.com",
+					Phone: 789,
+					Note:  "design team",
+				},
+			},
+			request:       ListContactRequest{Search: "ALP"},
+			expectedCount: 1,
+			expectedEmail: []string{"alp@test.com"},
 		},
 	}
 
@@ -58,15 +111,17 @@ func TestListContactHandler_Handle(t *testing.T) {
 
 			handler := NewListContactHandler(database)
 
-			response, err := handler.Handle(context.Background(), &ListContactRequest{})
+			response, err := handler.Handle(context.Background(), &testCase.request)
 
 			assert.NoError(t, err)
-			assert.Len(t, response.Contacts, len(testCase.seed))
+			assert.Len(t, response.Contacts, testCase.expectedCount)
 
 			expectedByEmail := make(map[string]CreateContactRequest, len(testCase.seed))
 			for _, contactRequest := range testCase.seed {
 				expectedByEmail[contactRequest.Email] = contactRequest
 			}
+
+			actualEmails := make([]string, 0, len(response.Contacts))
 
 			for _, contact := range response.Contacts {
 				expected, ok := expectedByEmail[contact.Email]
@@ -75,7 +130,10 @@ func TestListContactHandler_Handle(t *testing.T) {
 				assert.Equal(t, expected.Name, contact.Name)
 				assert.Equal(t, expected.Phone, contact.Phone)
 				assert.Equal(t, expected.Note, contact.Note)
+				actualEmails = append(actualEmails, contact.Email)
 			}
+
+			assert.ElementsMatch(t, testCase.expectedEmail, actualEmails)
 		})
 	}
 }

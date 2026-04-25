@@ -16,12 +16,22 @@ const baseFetch = async (endpoint: string, options?: RequestInit) => {
   return data;
 }
 
-const getContacts = async () => baseFetch("contacts")
+const getContacts = async (search = "") => {
+  const params = new URLSearchParams();
 
-export const contactsQuery = {
-  queryKey: ["contacts"],
-  queryFn: getContacts,
-}
+  if (search.trim()) {
+    params.set("search", search.trim());
+  }
+
+  const query = params.toString();
+
+  return baseFetch(query ? `contacts?${query}` : "contacts");
+};
+
+export const contactsQuery = (search = "") => ({
+  queryKey: ["contacts", search],
+  queryFn: () => getContacts(search),
+});
 
 export const createContactMutation = {
   mutationFn: async (contact: CreateFormData) => {
@@ -36,7 +46,7 @@ export const createContactMutation = {
     return res;
   },
   mutationSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: contactsQuery.queryKey });
+    queryClient.invalidateQueries({ queryKey: ["contacts"] });
     toast.success("Kişi başarıyla oluşturuldu!");
   }
 }
@@ -65,7 +75,7 @@ export const updateContactMutation = {
     return res;
   },
   mutationSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: contactsQuery.queryKey });
+    queryClient.invalidateQueries({ queryKey: ["contacts"] });
     toast.success("Kişi başarıyla güncellendi!");
   },
 
@@ -87,7 +97,7 @@ export const deleteContactMutation = {
     return res;
   },
   mutationSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: contactsQuery.queryKey });
+    queryClient.invalidateQueries({ queryKey: ["contacts"] });
     toast.success("Kişi başarıyla silindi!");
   },
   mutationError: () => {

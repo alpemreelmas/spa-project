@@ -33,7 +33,7 @@ export default function ContactModal({
       name: person?.name ?? "",
       email: person?.email ?? "",
       phone: person?.phone ? Number(person.phone) : undefined,
-      notes: person?.note ?? "",
+      note: person?.note ?? "",
     },
   });
 
@@ -88,7 +88,7 @@ export default function ContactModal({
         <textarea
           rows={4}
           placeholder="Notes"
-          {...register("notes")}
+          {...register("note")}
           className={`rounded-xl border px-3 py-2 text-sm outline-none
             ${formErrors.notes ? "border-red-500" : "border-[var(--line)]"}
             bg-[var(--surface-strong)] text-[var(--sea-ink)]
