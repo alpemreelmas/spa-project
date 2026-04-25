@@ -8,11 +8,11 @@ import FormErrorBox from "./ui/FormErrorBox";
 
 type CreateModalProps = Omit<React.HTMLAttributes<HTMLDivElement>, "onSubmit"> & {
   type: "create" | "edit";
-  onSubmit: (data: CreateFormData) => void;
+  onSubmit: (data: CreateFormData) => Promise<void>;
   person?: Contact;
 };
 
-export default function CreateModal({
+export default function ContactModal({
   type,
   onSubmit,
   person,
@@ -21,6 +21,7 @@ export default function CreateModal({
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors: formErrors },
   } = useForm<CreateFormData>({
     resolver: zodResolver(CreateFormSchema),
@@ -32,6 +33,11 @@ export default function CreateModal({
     },
   });
 
+  const handleFormSubmit = async (data: CreateFormData) => {
+    await onSubmit(data);
+    reset();
+  }
+
   return (
     <section className="feature-card border border-[var(--line)] p-4 sm:p-5" {...props}>
       <p className="island-kicker mb-2">Form Panel</p>
@@ -39,7 +45,7 @@ export default function CreateModal({
         {type === "create" ? "Add New Person" : "Edit Person"}
       </h2>
 
-      <form className="mt-5 grid gap-3" onSubmit={handleSubmit(onSubmit)}>
+      <form className="mt-5 grid gap-3" onSubmit={handleSubmit(handleFormSubmit)}>
         <input
           type="text"
           placeholder="Name Surname"
@@ -65,7 +71,7 @@ export default function CreateModal({
         <FormErrorBox error={formErrors.email} />
 
         <input
-          type="string"
+          type="number"
           placeholder="Phone"
           {...register("phone", { valueAsNumber: true })}
           className={`h-11 rounded-xl border px-3 text-sm outline-none

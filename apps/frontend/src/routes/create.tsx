@@ -1,5 +1,5 @@
 "use client";
-import CreateModal from "#/components/CreateModal";
+import CreateModal from "#/components/ContactModal";
 import { createContactMutation } from "#/integrations/query";
 import type { CreateFormData } from "#/schemas/createFormData";
 import { useMutation } from "@tanstack/react-query";
@@ -16,7 +16,7 @@ function RouteComponent() {
 	});
 
 	const onSubmit = (data: CreateFormData) => {
-		mutation.mutate(data);
+		return mutation.mutateAsync(data);
 	};
 
 	return (

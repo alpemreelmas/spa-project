@@ -1,26 +1,51 @@
 import { contactsQuery } from "#/integrations/query";
+import { columns } from "#/integrations/table/contact";
+import { getLastWeekStats } from "#/lib/utils/stats";
 import { useQuery } from "@tanstack/react-query";
+import {
+	flexRender,
+	getCoreRowModel,
+	getFilteredRowModel,
+	useReactTable,
+} from "@tanstack/react-table";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 
 export const Route = createFileRoute("/")({ component: App });
 
 function App() {
-	const { isPending ,data, isError } = useQuery(contactsQuery)
+	const { isPending, data, isError } = useQuery(contactsQuery);
+	const [globalFilter, setGlobalFilter] = useState("");
+	const contacts = data?.data?.contacts ?? [];
 
-	if(isError) {
+	const table = useReactTable({
+		data: contacts,
+		columns,
+		state: {
+			globalFilter,
+		},
+		onGlobalFilterChange: setGlobalFilter,
+		getCoreRowModel: getCoreRowModel(),
+		getFilteredRowModel: getFilteredRowModel(),
+		globalFilterFn: "includesString",
+	});
+
+	if (isError) {
 		return (
 			<div className="flex h-screen items-center justify-center">
-				<p className="text-sm text-red-500">Kişiler yüklenirken bir hata oluştu.</p>
+				<p className="text-sm text-red-500">
+					Kişiler yüklenirken bir hata oluştu.
+				</p>
 			</div>
-		)
+		);
 	}
 
-	if(isPending) {
+	if (isPending) {
 		return (
 			<div className="flex h-screen items-center justify-center">
 				<p className="text-sm text-gray-500">Kişiler yükleniyor...</p>
 			</div>
-		)
+		);
 	}
 
 	return (
@@ -44,7 +69,7 @@ function App() {
 								Toplam Kişi
 							</p>
 							<p className="m-0 mt-2 text-2xl font-extrabold text-[var(--sea-ink)]">
-								{data.contacts?.length || 0}
+								{contacts.length}
 							</p>
 						</article>
 						<article className="feature-card rounded-2xl border border-[var(--line)] px-4 py-3">
@@ -52,169 +77,101 @@ function App() {
 								Bu Hafta
 							</p>
 							<p className="m-0 mt-2 text-2xl font-extrabold text-[var(--sea-ink)]">
-								+24
+								+{getLastWeekStats(contacts)}
 							</p>
 						</article>
 					</div>
 				</div>
 
-				<div className="flex flex-col sm:flex-row sm:items-start w-full">
-					<section className="feature-card rounded-3xl border border-[var(--line)] p-4 sm:p-5 w-full">
-						<div className="mb-4 flex flex-wrap items-center gap-2">
-							<input
-								type="search"
-								placeholder="İsim, e-posta veya etiket ara..."
-								className="h-11 min-w-[220px] flex-1 rounded-xl border border-[var(--line)] bg-[var(--surface-strong)] px-4 text-sm text-[var(--sea-ink)] outline-none ring-0 placeholder:text-[var(--sea-ink-soft)] focus:border-[var(--lagoon)]"
-							/>
-							<Link
-								to="/create"
-								className="h-11 flex items-center rounded-xl border border-transparent bg-[linear-gradient(90deg,#3fb5ae,#74ccb8)] px-4 text-sm font-semibold text-white"
-							>
-								+ Yeni Kişi
-							</Link>
+				<section className="feature-card w-full rounded-3xl border border-[var(--line)] p-4 sm:p-5">
+					<div className="mb-4 flex flex-wrap items-center gap-2">
+						<input
+							type="search"
+							value={globalFilter}
+							onChange={(event) => setGlobalFilter(event.target.value)}
+							placeholder="İsim, e-posta, telefon veya not ara..."
+							className="h-11 min-w-[220px] flex-1 rounded-xl border border-[var(--line)] bg-[var(--surface-strong)] px-4 text-sm text-[var(--sea-ink)] outline-none ring-0 placeholder:text-[var(--sea-ink-soft)] focus:border-[var(--lagoon)]"
+						/>
+						<Link
+							to="/create"
+							className="flex h-11 items-center rounded-xl border border-transparent bg-[linear-gradient(90deg,#3fb5ae,#74ccb8)] px-4 text-sm font-semibold text-white"
+						>
+							+ Yeni Kişi
+						</Link>
+					</div>
+
+					<div className="mb-4 flex flex-wrap gap-2">
+						<span className="rounded-full border border-[var(--chip-line)] bg-[var(--chip-bg)] px-3 py-1 text-xs font-semibold text-[var(--sea-ink)]">
+							Hepsi
+						</span>
+						<span className="rounded-full border border-[var(--chip-line)] bg-[var(--chip-bg)] px-3 py-1 text-xs font-semibold text-[var(--sea-ink-soft)]">
+							TanStack Table
+						</span>
+						<span className="rounded-full border border-[var(--chip-line)] bg-[var(--chip-bg)] px-3 py-1 text-xs font-semibold text-[var(--sea-ink-soft)]">
+							Aranabilir
+						</span>
+						<span className="rounded-full border border-[var(--chip-line)] bg-[var(--chip-bg)] px-3 py-1 text-xs font-semibold text-[var(--sea-ink-soft)]">
+							Canli Veri
+						</span>
+					</div>
+
+					<div className="overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface)]">
+						<div className="overflow-x-auto">
+							<table className="min-w-full border-collapse text-left">
+								<thead className="bg-[var(--surface-strong)]">
+									{table.getHeaderGroups().map((headerGroup) => (
+										<tr key={headerGroup.id}>
+											{headerGroup.headers.map((header) => (
+												<th
+													key={header.id}
+													className="border-b border-[var(--line)] px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--sea-ink-soft)]"
+												>
+													{header.isPlaceholder
+														? null
+														: flexRender(
+																header.column.columnDef.header,
+																header.getContext(),
+															)}
+												</th>
+											))}
+										</tr>
+									))}
+								</thead>
+								<tbody>
+									{table.getRowModel().rows.length ? (
+										table.getRowModel().rows.map((row) => (
+											<tr
+												key={row.id}
+												className="transition hover:bg-[var(--surface-strong)]"
+											>
+												{row.getVisibleCells().map((cell) => (
+													<td
+														key={cell.id}
+														className="border-b border-[var(--line)] px-4 py-3 text-sm text-[var(--sea-ink)]"
+													>
+														{flexRender(
+															cell.column.columnDef.cell,
+															cell.getContext(),
+														)}
+													</td>
+												))}
+											</tr>
+										))
+									) : (
+										<tr>
+											<td
+												colSpan={columns.length}
+												className="px-4 py-8 text-center text-sm text-[var(--sea-ink-soft)]"
+											>
+												Sonuc bulunamadi.
+											</td>
+										</tr>
+									)}
+								</tbody>
+							</table>
 						</div>
-
-						<div className="mb-4 flex flex-wrap gap-2">
-							<span className="rounded-full border border-[var(--chip-line)] bg-[var(--chip-bg)] px-3 py-1 text-xs font-semibold text-[var(--sea-ink)]">
-								Hepsi
-							</span>
-							<span className="rounded-full border border-[var(--chip-line)] bg-[var(--chip-bg)] px-3 py-1 text-xs font-semibold text-[var(--sea-ink-soft)]">
-								Müşteri
-							</span>
-							<span className="rounded-full border border-[var(--chip-line)] bg-[var(--chip-bg)] px-3 py-1 text-xs font-semibold text-[var(--sea-ink-soft)]">
-								Tedarikçi
-							</span>
-							<span className="rounded-full border border-[var(--chip-line)] bg-[var(--chip-bg)] px-3 py-1 text-xs font-semibold text-[var(--sea-ink-soft)]">
-								Potansiyel
-							</span>
-						</div>
-
-						<ul className="m-0 grid list-none gap-3 p-0">
-							<li className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4">
-								<div className="flex flex-wrap items-start justify-between gap-3">
-									<div>
-										<p className="m-0 text-base font-bold text-[var(--sea-ink)]">
-											Ece Kaya
-										</p>
-										<p className="m-0 mt-1 text-sm text-[var(--sea-ink-soft)]">
-											ece.kaya@novaworks.co
-										</p>
-									</div>
-									<span className="rounded-full border border-emerald-300/40 bg-emerald-100/80 px-2.5 py-1 text-xs font-semibold text-emerald-800 dark:border-emerald-300/20 dark:bg-emerald-500/10 dark:text-emerald-300">
-										Aktif
-									</span>
-								</div>
-								<div className="mt-3 flex flex-wrap gap-2 text-xs text-[var(--sea-ink-soft)]">
-									<span className="rounded-full border border-[var(--line)] px-2 py-1">
-										+90 532 000 10 11
-									</span>
-									<span className="rounded-full border border-[var(--line)] px-2 py-1">
-										VIP
-									</span>
-									<span className="rounded-full border border-[var(--line)] px-2 py-1">
-										Satış
-									</span>
-								</div>
-								<div className="mt-4 flex gap-2">
-									<button
-										type="button"
-										className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-xs font-semibold text-[var(--sea-ink)]"
-									>
-										Düzenle
-									</button>
-									<button
-										type="button"
-										className="rounded-lg border border-rose-300/45 bg-rose-100/70 px-3 py-1.5 text-xs font-semibold text-rose-800 dark:border-rose-300/25 dark:bg-rose-500/10 dark:text-rose-300"
-									>
-										Sil
-									</button>
-								</div>
-							</li>
-
-							<li className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4">
-								<div className="flex flex-wrap items-start justify-between gap-3">
-									<div>
-										<p className="m-0 text-base font-bold text-[var(--sea-ink)]">
-											Mert Aydin
-										</p>
-										<p className="m-0 mt-1 text-sm text-[var(--sea-ink-soft)]">
-											mert@pixelforge.dev
-										</p>
-									</div>
-									<span className="rounded-full border border-amber-300/50 bg-amber-100/80 px-2.5 py-1 text-xs font-semibold text-amber-800 dark:border-amber-300/25 dark:bg-amber-500/10 dark:text-amber-300">
-										Takipte
-									</span>
-								</div>
-								<div className="mt-3 flex flex-wrap gap-2 text-xs text-[var(--sea-ink-soft)]">
-									<span className="rounded-full border border-[var(--line)] px-2 py-1">
-										+90 535 202 93 42
-									</span>
-									<span className="rounded-full border border-[var(--line)] px-2 py-1">
-										Lead
-									</span>
-									<span className="rounded-full border border-[var(--line)] px-2 py-1">
-										Tasarım
-									</span>
-								</div>
-								<div className="mt-4 flex gap-2">
-									<button
-										type="button"
-										className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-xs font-semibold text-[var(--sea-ink)]"
-									>
-										Düzenle
-									</button>
-									<button
-										type="button"
-										className="rounded-lg border border-rose-300/45 bg-rose-100/70 px-3 py-1.5 text-xs font-semibold text-rose-800 dark:border-rose-300/25 dark:bg-rose-500/10 dark:text-rose-300"
-									>
-										Sil
-									</button>
-								</div>
-							</li>
-
-							<li className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4">
-								<div className="flex flex-wrap items-start justify-between gap-3">
-									<div>
-										<p className="m-0 text-base font-bold text-[var(--sea-ink)]">
-											Leyla Gunes
-										</p>
-										<p className="m-0 mt-1 text-sm text-[var(--sea-ink-soft)]">
-											leyla@orahealth.com
-										</p>
-									</div>
-									<span className="rounded-full border border-sky-300/45 bg-sky-100/80 px-2.5 py-1 text-xs font-semibold text-sky-800 dark:border-sky-300/25 dark:bg-sky-500/10 dark:text-sky-300">
-										Yeni
-									</span>
-								</div>
-								<div className="mt-3 flex flex-wrap gap-2 text-xs text-[var(--sea-ink-soft)]">
-									<span className="rounded-full border border-[var(--line)] px-2 py-1">
-										+90 531 778 21 67
-									</span>
-									<span className="rounded-full border border-[var(--line)] px-2 py-1">
-										Healthcare
-									</span>
-									<span className="rounded-full border border-[var(--line)] px-2 py-1">
-										Onboarding
-									</span>
-								</div>
-								<div className="mt-4 flex gap-2">
-									<button
-										type="button"
-										className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-xs font-semibold text-[var(--sea-ink)]"
-									>
-										Düzenle
-									</button>
-									<button
-										type="button"
-										className="rounded-lg border border-rose-300/45 bg-rose-100/70 px-3 py-1.5 text-xs font-semibold text-rose-800 dark:border-rose-300/25 dark:bg-rose-500/10 dark:text-rose-300"
-									>
-										Sil
-									</button>
-								</div>
-							</li>
-						</ul>
-					</section>
-				</div>
+					</div>
+				</section>
 			</section>
 		</main>
 	);
