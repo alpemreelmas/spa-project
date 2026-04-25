@@ -6,8 +6,15 @@ const apiUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
 
 export const queryClient = new QueryClient();
 
-const baseFetch = async (endpoint: string, options?: RequestInit) => {
-  const res = await fetch(`${apiUrl}/api/v1/${endpoint}`, options);
+const baseFetch = async (
+  endpoint: string,
+  options?: RequestInit,
+  signal?: AbortSignal,
+) => {
+  const res = await fetch(`${apiUrl}/api/v1/${endpoint}`, {
+    ...options,
+    signal,
+  });
   const data = await res.json();
   if(!res.ok || data.error) {
     throw new Error(data.message || data.error || "An error occurred while fetching data.");
@@ -16,7 +23,7 @@ const baseFetch = async (endpoint: string, options?: RequestInit) => {
   return data;
 }
 
-const getContacts = async (search = "") => {
+const getContacts = async (search = "", signal?: AbortSignal) => {
   const params = new URLSearchParams();
 
   if (search.trim()) {
@@ -25,12 +32,12 @@ const getContacts = async (search = "") => {
 
   const query = params.toString();
 
-  return baseFetch(query ? `contacts?${query}` : "contacts");
+  return baseFetch(query ? `contacts?${query}` : "contacts", undefined, signal);
 };
 
 export const contactsQuery = (search = "") => ({
   queryKey: ["contacts", search],
-  queryFn: () => getContacts(search),
+  queryFn: ({ signal }: { signal: AbortSignal }) => getContacts(search, signal),
 });
 
 export const createContactMutation = {

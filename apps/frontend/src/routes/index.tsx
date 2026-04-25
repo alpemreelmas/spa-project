@@ -1,23 +1,31 @@
 import { contactsQuery, deleteContactMutation } from "#/integrations/query";
 import { getColumns, type Contact } from "#/integrations/table/contact";
 import { getLastWeekStats } from "#/lib/utils/stats";
-import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
 	flexRender,
 	getCoreRowModel,
 	useReactTable,
 } from "@tanstack/react-table";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useDeferredValue, useState } from "react";
+import { startTransition, useEffect, useState } from "react";
 
 export const Route = createFileRoute("/")({ component: App });
 
 function App() {
 	const [search, setSearch] = useState("");
-	const deferredSearch = useDeferredValue(search);
+	const [debouncedSearch, setDebouncedSearch] = useState("");
+
+	useEffect(() => {
+		const timeout = window.setTimeout(() => {
+			setDebouncedSearch(search);
+		}, 300);
+
+		return () => window.clearTimeout(timeout);
+	}, [search]);
+
 	const { isPending, isFetching, data, isError } = useQuery({
-		...contactsQuery(deferredSearch),
-		placeholderData: keepPreviousData,
+		...contactsQuery(debouncedSearch),
 	});
 	const contacts = data?.data?.contacts ?? [];
 
@@ -49,7 +57,7 @@ function App() {
 		);
 	}
 
-	if (isPending) {
+	if (isPending && !data) {
 		return (
 			<div className="flex h-screen items-center justify-center">
 				<p className="text-sm text-gray-500">Loading contacts...</p>
@@ -97,7 +105,12 @@ function App() {
 						<input
 							type="search"
 							value={search}
-							onChange={(event) => setSearch(event.target.value)}
+							onChange={(event) => {
+								const nextValue = event.target.value;
+								startTransition(() => {
+									setSearch(nextValue);
+								});
+							}}
 							placeholder="Search by name, email or notes..."
 							className="h-11 min-w-[220px] flex-1 rounded-xl border border-[var(--line)] bg-[var(--surface-strong)] px-4 text-sm text-[var(--sea-ink)] outline-none ring-0 placeholder:text-[var(--sea-ink-soft)] focus:border-[var(--lagoon)]"
 						/>

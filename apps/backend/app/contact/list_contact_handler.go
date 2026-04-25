@@ -25,7 +25,7 @@ func NewListContactHandler(db *sqlx.DB) *ListContactHandler {
 }
 
 func (h *ListContactHandler) Handle(ctx context.Context, req *ListContactRequest) (*ListContactResponse, error) {
-	var c []domain.Contact
+	c := make([]domain.Contact, 0)
 	search := strings.TrimSpace(req.Search)
 
 	query := "SELECT * FROM contacts"
