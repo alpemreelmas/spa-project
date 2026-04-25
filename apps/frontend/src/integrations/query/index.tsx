@@ -47,7 +47,7 @@ export const createContactMutation = {
   },
   mutationSuccess: () => {
     queryClient.invalidateQueries({ queryKey: ["contacts"] });
-    toast.success("Kişi başarıyla oluşturuldu!");
+    toast.success("Contact created successfully!");
   }
 }
 
@@ -76,11 +76,11 @@ export const updateContactMutation = {
   },
   mutationSuccess: () => {
     queryClient.invalidateQueries({ queryKey: ["contacts"] });
-    toast.success("Kişi başarıyla güncellendi!");
+    toast.success("Contact updated successfully!");
   },
 
   mutationError: () => {
-    toast.error("Kişi güncellenirken bir hata oluştu!");
+    toast.error("An error occurred while updating the contact!");
   }
 }
 
@@ -98,9 +98,9 @@ export const deleteContactMutation = {
   },
   mutationSuccess: () => {
     queryClient.invalidateQueries({ queryKey: ["contacts"] });
-    toast.success("Kişi başarıyla silindi!");
+    toast.success("Contact deleted successfully!");
   },
   mutationError: () => {
-    toast.error("Kişi silinirken bir hata oluştu!");
+    toast.error("An error occurred while deleting the contact!");
   }
 }

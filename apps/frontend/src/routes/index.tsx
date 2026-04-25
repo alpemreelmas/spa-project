@@ -43,7 +43,7 @@ function App() {
 		return (
 			<div className="flex h-screen items-center justify-center">
 				<p className="text-sm text-red-500">
-					Kişiler yüklenirken bir hata oluştu.
+					An error occurred while loading contacts.
 				</p>
 			</div>
 		);
@@ -52,7 +52,7 @@ function App() {
 	if (isPending) {
 		return (
 			<div className="flex h-screen items-center justify-center">
-				<p className="text-sm text-gray-500">Kişiler yükleniyor...</p>
+				<p className="text-sm text-gray-500">Loading contacts...</p>
 			</div>
 		);
 	}
@@ -75,7 +75,7 @@ function App() {
 					<div className="grid min-w-[220px] grid-cols-2 gap-3">
 						<article className="feature-card rounded-2xl border border-[var(--line)] px-4 py-3">
 							<p className="m-0 text-[0.7rem] font-bold uppercase tracking-[0.14em] text-[var(--sea-ink-soft)]">
-								Toplam Kişi
+								Total Contacts
 							</p>
 							<p className="m-0 mt-2 text-2xl font-extrabold text-[var(--sea-ink)]">
 								{contacts.length}
@@ -83,7 +83,7 @@ function App() {
 						</article>
 						<article className="feature-card rounded-2xl border border-[var(--line)] px-4 py-3">
 							<p className="m-0 text-[0.7rem] font-bold uppercase tracking-[0.14em] text-[var(--sea-ink-soft)]">
-								Bu Hafta
+								This Week
 							</p>
 							<p className="m-0 mt-2 text-2xl font-extrabold text-[var(--sea-ink)]">
 								+{getLastWeekStats(contacts)}
@@ -98,34 +98,34 @@ function App() {
 							type="search"
 							value={search}
 							onChange={(event) => setSearch(event.target.value)}
-							placeholder="İsim, e-posta veya not ara..."
+							placeholder="Search by name, email or notes..."
 							className="h-11 min-w-[220px] flex-1 rounded-xl border border-[var(--line)] bg-[var(--surface-strong)] px-4 text-sm text-[var(--sea-ink)] outline-none ring-0 placeholder:text-[var(--sea-ink-soft)] focus:border-[var(--lagoon)]"
 						/>
 						<Link
 							to="/create"
 							className="flex h-11 items-center rounded-xl border border-transparent bg-[linear-gradient(90deg,#3fb5ae,#74ccb8)] px-4 text-sm font-semibold text-white"
 						>
-							+ Yeni Kişi
+							+ New Contact
 						</Link>
 						{isFetching ? (
 							<span className="text-xs font-semibold text-[var(--sea-ink-soft)]">
-								Araniyor...
+								Searching...
 							</span>
 						) : null}
 					</div>
 
 					<div className="mb-4 flex flex-wrap gap-2">
 						<span className="rounded-full border border-[var(--chip-line)] bg-[var(--chip-bg)] px-3 py-1 text-xs font-semibold text-[var(--sea-ink)]">
-							Hepsi
+							All
 						</span>
 						<span className="rounded-full border border-[var(--chip-line)] bg-[var(--chip-bg)] px-3 py-1 text-xs font-semibold text-[var(--sea-ink-soft)]">
 							TanStack Table
 						</span>
 						<span className="rounded-full border border-[var(--chip-line)] bg-[var(--chip-bg)] px-3 py-1 text-xs font-semibold text-[var(--sea-ink-soft)]">
-							Aranabilir
+							Searchable
 						</span>
 						<span className="rounded-full border border-[var(--chip-line)] bg-[var(--chip-bg)] px-3 py-1 text-xs font-semibold text-[var(--sea-ink-soft)]">
-							Canli Veri
+							Live Data
 						</span>
 					</div>
 
@@ -177,7 +177,7 @@ function App() {
 												colSpan={columns.length}
 												className="px-4 py-8 text-center text-sm text-[var(--sea-ink-soft)]"
 											>
-												Sonuc bulunamadi.
+												No results found.
 											</td>
 										</tr>
 									)}
