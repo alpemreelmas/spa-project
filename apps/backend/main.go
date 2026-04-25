@@ -118,6 +118,7 @@ func main() {
 	contactListHandler := contact.NewListContactHandler(database)
 	contactHandler := contact.NewCreateContactHandler(database)
 	contactUpdateHandler := contact.NewUpdateContactHandler(database)
+	contactGetHandler := contact.NewGetContactHandler(database)
 	contactDeleteHandler := contact.NewDeleteContactHandler(database)
 
 	app := fiber.New(fiber.Config{
@@ -138,6 +139,7 @@ func main() {
 	api.Get("/contacts", handle[contact.ListContactRequest, contact.ListContactResponse](contactListHandler))
 	api.Post("/contacts", handle[contact.CreateContactRequest, contact.CreateContactResponse](contactHandler))
 	api.Put("/contacts/:id", handle[contact.UpdateContactRequest, contact.UpdateContactResponse](contactUpdateHandler))
+	api.Get("/contacts/:id", handle[contact.GetContactRequest, contact.GetContactResponse](contactGetHandler))
 	api.Delete("/contacts/:id", handle[contact.DeleteContactRequest, contact.DeleteContactResponse](contactDeleteHandler))
 
 	// Start server in a goroutine

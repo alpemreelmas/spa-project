@@ -9,8 +9,6 @@ import Footer from '../components/Footer'
 import { ToastContainer } from 'react-toastify'
 import Header from '../components/Header'
 
-import StoreDevtools from '../lib/demo-store-devtools'
-
 import appCss from '../styles.css?url'
 
 import type { QueryClient } from '@tanstack/react-query'
@@ -66,7 +64,6 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               name: 'Tanstack Router',
               render: <TanStackRouterDevtoolsPanel />,
             },
-            StoreDevtools,
           ]}
         />
         <Scripts />

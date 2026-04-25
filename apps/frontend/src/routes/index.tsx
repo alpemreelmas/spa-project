@@ -1,7 +1,7 @@
-import { contactsQuery } from "#/integrations/query";
-import { columns } from "#/integrations/table/contact";
+import { contactsQuery, deleteContactMutation } from "#/integrations/query";
+import { getColumns, type Contact } from "#/integrations/table/contact";
 import { getLastWeekStats } from "#/lib/utils/stats";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
 	flexRender,
 	getCoreRowModel,
@@ -17,6 +17,18 @@ function App() {
 	const { isPending, data, isError } = useQuery(contactsQuery);
 	const [globalFilter, setGlobalFilter] = useState("");
 	const contacts = data?.data?.contacts ?? [];
+
+	const deleteMutation = useMutation({
+		mutationFn: deleteContactMutation.mutationFn,
+		onSuccess: deleteContactMutation.mutationSuccess,
+	});
+
+	const handleDelete = (_contact: Contact) => {
+		return deleteMutation.mutateAsync(_contact.id);
+	};
+	const columns = getColumns({
+		onDelete: handleDelete,
+	});
 
 	const table = useReactTable({
 		data: contacts,

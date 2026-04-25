@@ -6,10 +6,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { CreateFormSchema, type CreateFormData } from "#/schemas/createFormData";
 import FormErrorBox from "./ui/FormErrorBox";
 
-type CreateModalProps = Omit<React.HTMLAttributes<HTMLDivElement>, "onSubmit"> & {
+type OnSubmit =
+    | ((data: CreateFormData) => Promise<void>)
+    | ((data: CreateFormData, id: number) => Promise<void>);
+
+type ContactModalProps = Omit<React.HTMLAttributes<HTMLDivElement>, "onSubmit"> & {
   type: "create" | "edit";
-  onSubmit: (data: CreateFormData) => Promise<void>;
-  person?: Contact;
+  onSubmit:OnSubmit;
+  person: Contact;
 };
 
 export default function ContactModal({
@@ -17,7 +21,7 @@ export default function ContactModal({
   onSubmit,
   person,
   ...props
-}: CreateModalProps) {
+}: ContactModalProps) {
   const {
     register,
     handleSubmit,
@@ -34,7 +38,7 @@ export default function ContactModal({
   });
 
   const handleFormSubmit = async (data: CreateFormData) => {
-    await onSubmit(data);
+    await onSubmit(data, person.id);
     reset();
   }
 

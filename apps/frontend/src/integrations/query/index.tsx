@@ -40,3 +40,57 @@ export const createContactMutation = {
     toast.success("Kişi başarıyla oluşturuldu!");
   }
 }
+
+const getSingleContact = async ( contactId: number ) => {
+  return baseFetch(`contacts/${contactId}`);
+}
+
+export const contactsSingleQuery = (contactId: number) => ({
+  queryKey: ["contacts", contactId],
+  queryFn: () => getSingleContact(contactId),
+  enabled: !!contactId,
+});
+
+
+export const updateContactMutation = {
+  mutationFn: async (contact: CreateFormData & { id: number }) => {
+    const res = await baseFetch(`contacts/${contact.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    body: JSON.stringify(contact),
+  });
+
+    return res;
+  },
+  mutationSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: contactsQuery.queryKey });
+    toast.success("Kişi başarıyla güncellendi!");
+  },
+
+  mutationError: () => {
+    toast.error("Kişi güncellenirken bir hata oluştu!");
+  }
+}
+
+
+export const deleteContactMutation = {
+  mutationFn: async (contactId: number) => {
+    const res = await baseFetch(`contacts/${contactId}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    return res;
+  },
+  mutationSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: contactsQuery.queryKey });
+    toast.success("Kişi başarıyla silindi!");
+  },
+  mutationError: () => {
+    toast.error("Kişi silinirken bir hata oluştu!");
+  }
+}
