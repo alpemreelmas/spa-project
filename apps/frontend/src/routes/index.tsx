@@ -1,9 +1,28 @@
-import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { contactsQuery } from "#/integrations/query";
+import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({ component: App });
 
 function App() {
-  const router = useRouter();
+	const { isPending ,data, isError } = useQuery(contactsQuery)
+
+	if(isError) {
+		return (
+			<div className="flex h-screen items-center justify-center">
+				<p className="text-sm text-red-500">Kişiler yüklenirken bir hata oluştu.</p>
+			</div>
+		)
+	}
+
+	if(isPending) {
+		return (
+			<div className="flex h-screen items-center justify-center">
+				<p className="text-sm text-gray-500">Kişiler yükleniyor...</p>
+			</div>
+		)
+	}
+
 	return (
 		<main className="page-wrap px-4 pb-16 pt-10 sm:pt-14">
 			<section className="island-shell rise-in overflow-hidden rounded-3xl border p-6 sm:p-8">
@@ -25,7 +44,7 @@ function App() {
 								Toplam Kişi
 							</p>
 							<p className="m-0 mt-2 text-2xl font-extrabold text-[var(--sea-ink)]">
-								412
+								{data.contacts?.length || 0}
 							</p>
 						</article>
 						<article className="feature-card rounded-2xl border border-[var(--line)] px-4 py-3">

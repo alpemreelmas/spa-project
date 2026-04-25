@@ -16,6 +16,7 @@ import (
 	"github.com/alpemreelmas/spa-contact/pkg/config"
 	"github.com/go-playground/validator"
 	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/middleware/cors"
 	"go.uber.org/zap"
 	_ "modernc.org/sqlite"
 )
@@ -125,6 +126,11 @@ func main() {
 		WriteTimeout: 10 * time.Second,
 		Concurrency:  256 * 1024,
 	})
+
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: []string{"http://localhost:3000"},
+		AllowHeaders: []string{"Origin", "Content-Type", "Accept"},
+	}))
 
 	app.Use(RequestDurationMiddleware())
 	api := app.Group("/api/v1")

@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { CreateFormSchema, type CreateFormData } from "#/schemas/createFormData";
 import FormErrorBox from "./ui/FormErrorBox";
 
-type CreateModalProps = React.HTMLAttributes<HTMLDivElement> & {
+type CreateModalProps = Omit<React.HTMLAttributes<HTMLDivElement>, "onSubmit"> & {
   type: "create" | "edit";
   onSubmit: (data: CreateFormData) => void;
   person?: Contact;
@@ -27,7 +27,7 @@ export default function CreateModal({
     defaultValues: {
       name: person?.name ?? "",
       email: person?.email ?? "",
-      phone: person?.phone ?? "",
+      phone: person?.phone ? Number(person.phone) : undefined,
       notes: person?.note ?? "",
     },
   });
@@ -67,7 +67,7 @@ export default function CreateModal({
         <input
           type="string"
           placeholder="Phone"
-          {...register("phone")}
+          {...register("phone", { valueAsNumber: true })}
           className={`h-11 rounded-xl border px-3 text-sm outline-none
             ${formErrors.phone ? "border-red-500" : "border-[var(--line)]"}
             bg-[var(--surface-strong)] text-[var(--sea-ink)]
