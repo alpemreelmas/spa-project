@@ -1,20 +1,31 @@
-import { contactsQuery, deleteContactMutation } from "#/integrations/query";
-import { getColumns, type Contact } from "#/integrations/table/contact";
-import { getLastWeekStats } from "#/lib/utils/stats";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import {
 	flexRender,
 	getCoreRowModel,
+	getPaginationRowModel,
+	getSortedRowModel,
+	type SortingState,
 	useReactTable,
 } from "@tanstack/react-table";
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { startTransition, useEffect, useState } from "react";
+import {
+	startTransition,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from "react";
+import { contactsQuery, deleteContactMutation } from "#/integrations/query";
+import { type Contact, getColumns } from "#/integrations/table/contact";
+import { getLastWeekStats } from "#/lib/utils/stats";
 
 export const Route = createFileRoute("/")({ component: App });
 
 function App() {
 	const [search, setSearch] = useState("");
 	const [debouncedSearch, setDebouncedSearch] = useState("");
+	const [sorting, setSorting] = useState<SortingState>([]);
+	const [contactToDelete, setContactToDelete] = useState<Contact | null>(null);
 
 	useEffect(() => {
 		const timeout = window.setTimeout(() => {
@@ -32,38 +43,45 @@ function App() {
 	const deleteMutation = useMutation({
 		mutationFn: deleteContactMutation.mutationFn,
 		onSuccess: deleteContactMutation.mutationSuccess,
+		onError: deleteContactMutation.mutationError,
 	});
 
-	const handleDelete = (_contact: Contact) => {
-		return deleteMutation.mutateAsync(_contact.id);
+	const handleDelete = useCallback((_contact: Contact) => {
+		setContactToDelete(_contact);
+	}, []);
+	const confirmDelete = async () => {
+		if (!contactToDelete) {
+			return;
+		}
+
+		await deleteMutation.mutateAsync(contactToDelete.id);
+		setContactToDelete(null);
 	};
-	const columns = getColumns({
-		onDelete: handleDelete,
-	});
+
+	const columns = useMemo(
+		() =>
+			getColumns({
+				onDelete: handleDelete,
+			}),
+		[handleDelete],
+	);
 
 	const table = useReactTable({
 		data: contacts,
 		columns,
+		state: {
+			sorting,
+		},
+		initialState: {
+			pagination: {
+				pageSize: 5,
+			},
+		},
+		onSortingChange: setSorting,
 		getCoreRowModel: getCoreRowModel(),
+		getSortedRowModel: getSortedRowModel(),
+		getPaginationRowModel: getPaginationRowModel(),
 	});
-
-	if (isError) {
-		return (
-			<div className="flex h-screen items-center justify-center">
-				<p className="text-sm text-red-500">
-					An error occurred while loading contacts.
-				</p>
-			</div>
-		);
-	}
-
-	if (isPending && !data) {
-		return (
-			<div className="flex h-screen items-center justify-center">
-				<p className="text-sm text-gray-500">Loading contacts...</p>
-			</div>
-		);
-	}
 
 	return (
 		<main className="page-wrap px-4 pb-16 pt-10 sm:pt-14">
@@ -153,19 +171,55 @@ function App() {
 													key={header.id}
 													className="border-b border-[var(--line)] px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--sea-ink-soft)]"
 												>
-													{header.isPlaceholder
-														? null
-														: flexRender(
+													{header.isPlaceholder ? null : header.column.getCanSort() ? (
+														<button
+															type="button"
+															onClick={header.column.getToggleSortingHandler()}
+															className="flex items-center gap-1 text-left text-xs font-bold uppercase tracking-[0.12em] text-[var(--sea-ink-soft)]"
+														>
+															{flexRender(
 																header.column.columnDef.header,
 																header.getContext(),
 															)}
+															<span aria-hidden="true">
+																{header.column.getIsSorted() === "asc"
+																	? "↑"
+																	: header.column.getIsSorted() === "desc"
+																		? "↓"
+																		: "↕"}
+															</span>
+														</button>
+													) : (
+														flexRender(
+															header.column.columnDef.header,
+															header.getContext(),
+														)
+													)}
 												</th>
 											))}
 										</tr>
 									))}
 								</thead>
 								<tbody>
-									{table.getRowModel().rows.length ? (
+									{isError ? (
+										<tr>
+											<td
+												colSpan={columns.length}
+												className="px-4 py-8 text-center text-sm text-red-600"
+											>
+												An error occurred while loading contacts.
+											</td>
+										</tr>
+									) : isPending && !data ? (
+										<tr>
+											<td
+												colSpan={columns.length}
+												className="px-4 py-8 text-center text-sm text-[var(--sea-ink-soft)]"
+											>
+												Loading contacts...
+											</td>
+										</tr>
+									) : table.getRowModel().rows.length ? (
 										table.getRowModel().rows.map((row) => (
 											<tr
 												key={row.id}
@@ -190,7 +244,9 @@ function App() {
 												colSpan={columns.length}
 												className="px-4 py-8 text-center text-sm text-[var(--sea-ink-soft)]"
 											>
-												No results found.
+												{search.trim()
+													? "No contacts match your search."
+													: "No contacts yet. Create the first one."}
 											</td>
 										</tr>
 									)}
@@ -198,8 +254,65 @@ function App() {
 							</table>
 						</div>
 					</div>
+
+					<div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-[var(--sea-ink-soft)]">
+						<p className="m-0">
+							Page {table.getState().pagination.pageIndex + 1} of{" "}
+							{Math.max(table.getPageCount(), 1)}
+						</p>
+						<div className="flex items-center gap-2">
+							<button
+								type="button"
+								onClick={() => table.previousPage()}
+								disabled={!table.getCanPreviousPage()}
+								className="h-9 rounded-lg border border-[var(--line)] bg-[var(--surface-strong)] px-3 text-xs font-semibold text-[var(--sea-ink)] disabled:cursor-not-allowed disabled:opacity-50"
+							>
+								Previous
+							</button>
+							<button
+								type="button"
+								onClick={() => table.nextPage()}
+								disabled={!table.getCanNextPage()}
+								className="h-9 rounded-lg border border-[var(--line)] bg-[var(--surface-strong)] px-3 text-xs font-semibold text-[var(--sea-ink)] disabled:cursor-not-allowed disabled:opacity-50"
+							>
+								Next
+							</button>
+						</div>
+					</div>
 				</section>
 			</section>
+
+			{contactToDelete ? (
+				<div className="fixed inset-0 z-40 flex items-center justify-center bg-black/35 px-4">
+					<section className="feature-card w-full max-w-sm rounded-2xl border border-[var(--line)] p-5">
+						<p className="island-kicker mb-2">Confirm Delete</p>
+						<h2 className="m-0 text-lg font-bold text-[var(--sea-ink)]">
+							Delete {contactToDelete.name}?
+						</h2>
+						<p className="mt-2 text-sm text-[var(--sea-ink-soft)]">
+							This contact will be removed from the database.
+						</p>
+						<div className="mt-5 grid grid-cols-2 gap-2">
+							<button
+								type="button"
+								onClick={() => setContactToDelete(null)}
+								disabled={deleteMutation.isPending}
+								className="h-10 rounded-xl border border-[var(--line)] bg-[var(--surface-strong)] text-sm font-semibold text-[var(--sea-ink)]"
+							>
+								Cancel
+							</button>
+							<button
+								type="button"
+								onClick={confirmDelete}
+								disabled={deleteMutation.isPending}
+								className="h-10 rounded-xl border border-rose-300/45 bg-rose-600 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-65"
+							>
+								{deleteMutation.isPending ? "Deleting..." : "Delete"}
+							</button>
+						</div>
+					</section>
+				</div>
+			) : null}
 		</main>
 	);
 }

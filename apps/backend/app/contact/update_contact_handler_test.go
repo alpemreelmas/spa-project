@@ -15,7 +15,7 @@ func TestUpdateContactHandler_Handle_HappyPath(t *testing.T) {
 		"INSERT INTO contacts (name, email, phone, note) VALUES (?, ?, ?, ?)",
 		"Old Name",
 		"old@test.com",
-		int32(100),
+		int64(100),
 		"old note",
 	)
 	assert.NoError(t, err)
@@ -68,7 +68,7 @@ func TestUpdateContactHandler_Handle_ExistingPhone(t *testing.T) {
 		"INSERT INTO contacts (name, email, phone, note) VALUES (?, ?, ?, ?)",
 		"Old Name",
 		"old@test.com",
-		int32(100),
+		int64(100),
 		"old note",
 	)
 	assert.NoError(t, err)
@@ -81,7 +81,7 @@ func TestUpdateContactHandler_Handle_ExistingPhone(t *testing.T) {
 		ID:    int32(contactID),
 		Name:  "Old Name",
 		Email: "old@new.com",
-		Phone: int32(101), // Same phone as existing contact
+		Phone: int64(101),
 		Note:  "old note",
 	}
 

@@ -6,7 +6,7 @@ import (
 )
 
 type DeleteContactRequest struct {
-	ID int32 `uri:"id" validate:"required"`
+	ID int32 `uri:"id" validate:"required,gte=1"`
 }
 
 type DeleteContactResponse struct {

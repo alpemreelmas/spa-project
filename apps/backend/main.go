@@ -48,6 +48,19 @@ func (v *structValidator) Validate(out any) error {
 	return v.validate.Struct(out)
 }
 
+func validationErrorResponse(err error) fiber.Map {
+	if validationErrors, ok := err.(validator.ValidationErrors); ok {
+		for _, e := range validationErrors {
+			return fiber.Map{
+				"field": e.Field(),
+				"error": fmt.Sprintf("validation failed on '%s'", e.Tag()),
+			}
+		}
+	}
+
+	return fiber.Map{"error": err.Error()}
+}
+
 type Request any
 type Response any
 
@@ -63,28 +76,20 @@ func handle[R Request, Res Response](handler HandlerInterface[R, Res]) fiber.Han
 
 		if c.Method() == fiber.MethodPost || c.Method() == fiber.MethodPut || c.Method() == fiber.MethodPatch {
 			if err := c.Bind().Body(&req); err != nil && !errors.Is(err, fiber.ErrUnprocessableEntity) {
-				if validationErrors, ok := err.(validator.ValidationErrors); ok {
-					for _, e := range validationErrors {
-						return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-							"field": e.Field(),
-							"error": fmt.Sprintf("validation failed on '%s'", e.Tag()),
-						})
-					}
-				}
-				return err
+				return c.Status(fiber.StatusBadRequest).JSON(validationErrorResponse(err))
 			}
 		}
 
 		if err := c.Bind().URI(&req); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+			return c.Status(fiber.StatusBadRequest).JSON(validationErrorResponse(err))
 		}
 
 		if err := c.Bind().Query(&req); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+			return c.Status(fiber.StatusBadRequest).JSON(validationErrorResponse(err))
 		}
 
 		if err := c.Bind().Header(&req); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+			return c.Status(fiber.StatusBadRequest).JSON(validationErrorResponse(err))
 		}
 
 		/* ctx, cancel := context.WithTimeout(c.UserContext(), 3*time.Second)
@@ -122,10 +127,11 @@ func main() {
 	contactDeleteHandler := contact.NewDeleteContactHandler(database)
 
 	app := fiber.New(fiber.Config{
-		IdleTimeout:  5 * time.Second,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 10 * time.Second,
-		Concurrency:  256 * 1024,
+		IdleTimeout:     5 * time.Second,
+		ReadTimeout:     10 * time.Second,
+		WriteTimeout:    10 * time.Second,
+		Concurrency:     256 * 1024,
+		StructValidator: &structValidator{validate: validator.New()},
 	})
 
 	app.Use(cors.New(cors.Config{

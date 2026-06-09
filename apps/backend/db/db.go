@@ -24,6 +24,7 @@ func Init(dsnUri string) *sqlx.DB {
 	}
 
 	SetupSchemas(DB)
+	SeedContacts(DB)
 
 	zap.L().Info("SQLite connected successfully")
 	return DB
@@ -49,5 +50,31 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_contacts_phone ON contacts(phone);
 	if err != nil {
 		zap.L().Error("Failed to create table", zap.Error(err))
 		panic(fmt.Errorf("fatal error creating table: %w", err))
+	}
+
+}
+
+func SeedContacts(database *sqlx.DB) {
+	var count int
+	err := database.Get(&count, "SELECT COUNT(*) FROM contacts")
+	if err != nil {
+		zap.L().Error("Failed to count contacts", zap.Error(err))
+		panic(fmt.Errorf("fatal error counting contacts: %w", err))
+	}
+
+	if count > 0 {
+		return
+	}
+
+	seed := `INSERT INTO contacts (name, email, phone, note) VALUES
+		('Ada Lovelace', 'ada@example.com', 5011002000, 'First demo contact'),
+		('Grace Hopper', 'grace@example.com', 5011002001, 'Backend API reviewer'),
+		('Alan Turing', 'alan@example.com', 5011002002, 'Search and sorting sample'),
+		('Katherine Johnson', 'katherine@example.com', 5011002003, 'Numeric phone attribute sample');`
+
+	_, err = database.Exec(seed)
+	if err != nil {
+		zap.L().Error("Failed to seed contacts", zap.Error(err))
+		panic(fmt.Errorf("fatal error seeding contacts: %w", err))
 	}
 }

@@ -1,9 +1,9 @@
 "use client";
+import { useMutation } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
 import CreateModal from "#/components/ContactModal";
 import { createContactMutation } from "#/integrations/query";
 import type { CreateFormData } from "#/schemas/createFormData";
-import { useMutation } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/create")({
 	component: RouteComponent,
@@ -13,6 +13,7 @@ function RouteComponent() {
 	const mutation = useMutation({
 		mutationFn: createContactMutation.mutationFn,
 		onSuccess: createContactMutation.mutationSuccess,
+		onError: createContactMutation.mutationError,
 	});
 
 	const onSubmit = (data: CreateFormData) => {
@@ -24,6 +25,7 @@ function RouteComponent() {
 			<CreateModal
 				type="create"
 				onSubmit={onSubmit}
+				isSubmitting={mutation.isPending}
 				className="w-full max-w-3xl mt-10 "
 			/>
 		</div>

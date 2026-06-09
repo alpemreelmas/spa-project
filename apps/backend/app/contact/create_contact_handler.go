@@ -8,10 +8,10 @@ import (
 )
 
 type CreateContactRequest struct {
-	Name  string `json:"name" validate:"required"`
-	Email string `json:"email" validate:"required, email"`
-	Phone int32  `json:"phone" validate:"gte=0,lte=9999999999"`
-	Note  string `json:"note" validate:"max=255,omitempty"`
+	Name  string `json:"name" validate:"required,min=2,max=120"`
+	Email string `json:"email" validate:"required,email,max=160"`
+	Phone int64  `json:"phone" validate:"required,gte=1,lte=9999999999"`
+	Note  string `json:"note" validate:"omitempty,max=255"`
 }
 
 type CreateContactResponse struct {
