@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -71,6 +72,8 @@ type HandlerInterface[R Request, Res Response] interface {
 
 // Update handle function to accept HandlerInterface instead of Handler function
 func handle[R Request, Res Response](handler HandlerInterface[R, Res]) fiber.Handler {
+	validate := validator.New()
+
 	return func(c fiber.Ctx) error {
 		var req R
 
@@ -92,6 +95,10 @@ func handle[R Request, Res Response](handler HandlerInterface[R, Res]) fiber.Han
 			return c.Status(fiber.StatusBadRequest).JSON(validationErrorResponse(err))
 		}
 
+		if err := validate.Struct(req); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(validationErrorResponse(err))
+		}
+
 		/* ctx, cancel := context.WithTimeout(c.UserContext(), 3*time.Second)
 		defer cancel()
 		*/
@@ -100,6 +107,11 @@ func handle[R Request, Res Response](handler HandlerInterface[R, Res]) fiber.Han
 
 		res, err := handler.Handle(ctx, &req)
 		if err != nil {
+			if strings.Contains(err.Error(), "UNIQUE constraint failed") {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"error": "contact email or phone already exists",
+				})
+			}
 			zap.L().Error("Failed to handle request", zap.Error(err))
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 		}
@@ -127,11 +139,10 @@ func main() {
 	contactDeleteHandler := contact.NewDeleteContactHandler(database)
 
 	app := fiber.New(fiber.Config{
-		IdleTimeout:     5 * time.Second,
-		ReadTimeout:     10 * time.Second,
-		WriteTimeout:    10 * time.Second,
-		Concurrency:     256 * 1024,
-		StructValidator: &structValidator{validate: validator.New()},
+		IdleTimeout:  5 * time.Second,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		Concurrency:  256 * 1024,
 	})
 
 	app.Use(cors.New(cors.Config{

@@ -9,7 +9,7 @@ import (
 )
 
 type UpdateContactRequest struct {
-	ID    int32  `uri:"id" validate:"required,gte=1"`
+	ID    int32  `params:"id" validate:"required,gte=1"`
 	Name  string `json:"name" validate:"required,min=2,max=120"`
 	Email string `json:"email" validate:"required,email,max=160"`
 	Phone int64  `json:"phone" validate:"required,gte=1,lte=9999999999"`

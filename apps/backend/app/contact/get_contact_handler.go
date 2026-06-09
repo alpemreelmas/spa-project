@@ -8,7 +8,7 @@ import (
 )
 
 type GetContactRequest struct {
-	ID int32 `uri:"id" validate:"required"`
+	ID int32 `params:"id" validate:"required,gte=1"`
 }
 
 type GetContactResponse struct {
